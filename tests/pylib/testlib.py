@@ -186,6 +186,9 @@ def runTest():
     global TEMPinifile
 
     relpath = "./tests/configs/%s" % TEMPinifile
+
+    # this "./bin/Release/biosim4" is on Linux
+    # maybe need to be "./bin/Release/biosim4.exe" on Windows
     shellcmd = "./bin/Release/biosim4 %s" % relpath
     print("Running the simulation...\n")
     # launch biosim4

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # encoding: utf-8
 
 """ Thread utility functions
@@ -8,6 +7,7 @@ import threading
 import weakref
 import inspect
 import traceback
+import logging
 
 # threading functions
 def start_thread(thread_func,tname='',targs=()):

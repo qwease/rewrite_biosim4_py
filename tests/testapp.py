@@ -1,13 +1,15 @@
-#!/usr/bin/env python3
 # encoding: utf-8
 
 # Credit: Thanks to @venzen for the initial design and implementation of this test framework.
 
 
-""" This script runs a simulation test of a biosim4 configuration.
-    """
+""" 
+This script runs a simulation test of a biosim4 configuration.
+"""
 
 from sys import version_info, platform, argv, exit
+
+from datetime import datetime
 
 try:
     assert version_info >= (3, 4)
@@ -32,15 +34,15 @@ _scriptpath = Path(__file__).resolve()    # full path
 _scriptname = _scriptpath.name  # filename incl .py
 _appname = _scriptpath.stem     # filename excl .py
 _projname = "biosim4"
-_projconfig = "%s.ini" % _projname
-_modname = "%s-mod.py" % _appname
-_uiname = "%s-ui" % _appname
-_libname = "%s-lib" % _appname
-_configfile = "%s.ini" % _appname
+_projconfig = "{}.ini".format(_projname)
+_modname = "{}-mod.py".format(_appname)
+_uiname = "{}-ui".format(_appname)
+_libname = "{}-lib".format(_appname)
+_configfile = "{}.ini".format(_appname)
 # temporary file used by this app to create test configurations:
 _temp_ini = "tmp.ini"
 _results_log = "epoch-log.txt"
-_version = "21.12.12"
+_version = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
 
 usagemsg = """\nScript for testing a biosim4 simulation.
@@ -142,7 +144,7 @@ argp.add_argument(
             + "provide the name of the source .ini file in ./configs/"
 )
 argp.add_argument(
-    # this shows both test amd result params
+    # this shows both test and result params
     "-p",
     "--params",
     action = "store_true",
