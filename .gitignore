@@ -1,5 +1,8 @@
 #project-related
-src/
+src/*.cpp
+src/*.h
+src/CMakeLists.txt
+note.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
