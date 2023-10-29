@@ -54,10 +54,10 @@ class RandomUintGenerator:
             # non-zero value. Each thread uses a different seed, yet
             # deterministic per-thread.
             thread_num = ctypes.c_uint32(threading.get_ident())
-            self.rngx = ctypes.c_uint32(params.RNGSeed + 123456789 + thread_num)
-            self.rngy = ctypes.c_uint32(params.RNGSeed + 362436000 + thread_num)
-            self.rngz = ctypes.c_uint32(params.RNGSeed + 521288629 + thread_num)
-            self.rngc = ctypes.c_uint32(params.RNGSeed + 7654321 + thread_num)
+            self.rngx = ctypes.c_uint32(params.RNGSeed + 123456789 + thread_num.value)
+            self.rngy = ctypes.c_uint32(params.RNGSeed + 362436000 + thread_num.value)
+            self.rngz = ctypes.c_uint32(params.RNGSeed + 521288629 + thread_num.value)
+            self.rngc = ctypes.c_uint32(params.RNGSeed + 7654321 + thread_num.value)
             self.rngx = self.rngx if self.rngx != ctypes.c_uint32(0) else ctypes.c_uint32(123456789)
             self.rngy = self.rngy if self.rngy != ctypes.c_uint32(0) else ctypes.c_uint32(123456789)
             self.rngz = self.rngz if self.rngz != ctypes.c_uint32(0) else ctypes.c_uint32(123456789)
@@ -65,7 +65,7 @@ class RandomUintGenerator:
 
             # Initialize Jenkins deterministically per-thread:
             self.a = ctypes.c_uint32(0xf1ea5eed)
-            self.b = self.c = self.d = ctypes.c_uint32(params.RNGSeed + thread_num)
+            self.b = self.c = self.d = ctypes.c_uint32(params.RNGSeed + thread_num.value)
             if self.b.value == 0:
                 self.b = self.c = self.d.value + ctypes.c_uint32(123456789)
         else:
@@ -91,8 +91,8 @@ class RandomUintGenerator:
 
     def __call__(self,algo: [bool] = 0, min: Optional[ctypes.c_uint32] = None, max: Optional[ctypes.c_uint32] = None) -> ctypes.c_uint32:
         # algo: 
-        # 0: Marsaglia algorithm
-        # 1: Jenkins algorithm
+        # 0: Jenkins algorithm
+        # 1: Marsaglia algorithm
 
         if min is None or max is None:
             # This is equivalent to the C++ operator() method with no arguments
@@ -100,14 +100,14 @@ class RandomUintGenerator:
                 # Marsaglia algorithm
                 a = 698769069
                 self.rngx = ctypes.c_uint32(69069 * self.rngx.value + 12345)
-                self.rngy ^= ctypes.c_uint32(self.rngy.value << 13)
-                self.rngy ^= ctypes.c_uint32(self.rngy.value >> 17)
-                self.rngy ^= ctypes.c_uint32(self.rngy.value << 5)  # y must never be set to zero!
+                self.rngy.value ^= ctypes.c_uint32(self.rngy.value << 13).value
+                self.rngy.value ^= ctypes.c_uint32(self.rngy.value >> 17).value
+                self.rngy.value ^= ctypes.c_uint32(self.rngy.value << 5).value  # you must never be set to zero!
                 t = ctypes.c_uint32(a * self.rngz.value + self.rngc.value)
                 self.rngc = ctypes.c_uint32(t.value >> 32)  # Also avoid setting z=c=0!
                 return self.rngx.value + self.rngy.value + (self.rngz.value == t.value)
             else:
-                # Jenkins algorithm
+                # Jenkins algorithm (Faster)
                 rot32 = lambda x, k: (((x) << (k)) | ((x) >> (32 - (k))))
                 e = ctypes.c_uint32(self.a.value - rot32(self.b.value, 27))
                 self.a = ctypes.c_uint32(self.b.value ^ rot32(self.c.value, 17))
@@ -130,18 +130,18 @@ RANDOM_UINT_MAX = 0xffffffff
 if __name__ == "__main__":
     class Params:
         def __init__(self) -> None:
-            self.deterministic=0
-            self.RNGSeed=18
+            self.deterministic=True
+            self.RNGSeed=0
     
     def thread_function(thread_id):
         randomUint.instance = RandomUintGenerator()
         randomUint.instance.initialize(params=Params())
-        print(f'Thread-{thread_id} value: ', randomUint.instance())
+        print(f'Thread-{thread_id} value: ', randomUint.instance(algo=0))
 
     threads = []
 
-    from datetime import datetime 
-    start = datetime.now()
+    import time
+    start = time.time()
     # Create and start 10 threads
     for i in range(10):
         t = threading.Thread(target=thread_function, args=(i,))
@@ -152,5 +152,5 @@ if __name__ == "__main__":
     for t in threads:
         t.join()
     
-    end= datetime.now()
+    end= time.time()
     print(end-start)
