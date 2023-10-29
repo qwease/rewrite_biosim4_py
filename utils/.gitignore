@@ -1,5 +1,6 @@
 # Ignore ... in this directory
 working_on
+done
+__pycache__
 # Except this file
 !.gitignore
-
