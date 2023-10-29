@@ -89,7 +89,7 @@ class RandomUintGenerator:
             self.a = ctypes.c_uint32(0xf1ea5eed)
             self.b = self.c = self.d = ctypes.c_uint32(random.getrandbits(32)) or ctypes.c_uint32(123456789)
 
-    def __call__(self,algo: [bool] = 0, min: Optional[ctypes.c_uint32] = None, max: Optional[ctypes.c_uint32] = None) -> ctypes.c_uint32:
+    def __call__(self,algo: bool = 0, min: Optional[ctypes.c_uint32] = None, max: Optional[ctypes.c_uint32] = None) -> ctypes.c_uint32:
         # algo: 
         # 0: Jenkins algorithm
         # 1: Marsaglia algorithm

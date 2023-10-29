@@ -1,5 +1,6 @@
 # Ignore ... in this directory
 working_on
+done
 # Except this file
 !.gitignore
 
