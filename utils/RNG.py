@@ -88,12 +88,12 @@ class RandomUintGenerator:
             # Initialize Jenkins, but don't let any of the values be zero:
             self.a = ctypes.c_uint32(0xf1ea5eed)
             self.b = self.c = self.d = ctypes.c_uint32(random.getrandbits(32)) or ctypes.c_uint32(123456789)
+        print(thread_num.value) # check if unique
 
     def __call__(self,algo: bool = 0, min: Optional[ctypes.c_uint32] = None, max: Optional[ctypes.c_uint32] = None) -> ctypes.c_uint32:
         # algo: 
         # 0: Jenkins algorithm
         # 1: Marsaglia algorithm
-
         if min is None or max is None:
             # This is equivalent to the C++ operator() method with no arguments
             if algo:  # Replace with a condition to choose between the two algorithms
@@ -105,7 +105,7 @@ class RandomUintGenerator:
                 self.rngy.value ^= ctypes.c_uint32(self.rngy.value << 5).value  # you must never be set to zero!
                 t = ctypes.c_uint32(a * self.rngz.value + self.rngc.value)
                 self.rngc = ctypes.c_uint32(t.value >> 32)  # Also avoid setting z=c=0!
-                return self.rngx.value + self.rngy.value + (self.rngz.value == t.value)
+                return ctypes.c_uint32(self.rngx.value + self.rngy.value + (self.rngz.value == t.value))
             else:
                 # Jenkins algorithm (Faster)
                 rot32 = lambda x, k: (((x) << (k)) | ((x) >> (32 - (k))))
@@ -114,29 +114,32 @@ class RandomUintGenerator:
                 self.b = ctypes.c_uint32(self.c.value + self.d.value)
                 self.c = ctypes.c_uint32(self.d.value + e.value)
                 self.d = ctypes.c_uint32(e.value + self.a.value)
-                return self.d.value
+                return ctypes.c_uint32(self.d.value)
         else:
             # This is equivalent to the C++ operator() method with min and max arguments
             assert max.value >= min.value
-            return (self.__call__().value % (max.value - min.value + 1)) + min.value
+            return ctypes.c_uint32((self.__call__(algo=algo).value % (max.value - min.value + 1)) + min.value)
 
-# The globally-scoped random number generator.
-# Each thread will have a private instance of the RNG.
-randomUint = threading.local()
-randomUint.instance = RandomUintGenerator()
-
-RANDOM_UINT_MAX = 0xffffffff
-
-if __name__ == "__main__":
-    class Params:
+class Params:
         def __init__(self) -> None:
             self.deterministic=True
             self.RNGSeed=0
+
+
+
+if __name__ == "__main__":
     
     def thread_function(thread_id):
         randomUint.instance = RandomUintGenerator()
         randomUint.instance.initialize(params=Params())
         print(f'Thread-{thread_id} value: ', randomUint.instance(algo=0))
+    
+    # The globally-scoped random number generator.
+    # Each thread will have a private instance of the RNG.
+    randomUint = threading.local()
+    randomUint.instance = RandomUintGenerator()
+
+    randomUintInst = randomUint.instance.initialize(params=Params())
 
     threads = []
 
