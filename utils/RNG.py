@@ -17,30 +17,36 @@ from typing import Optional
 import random
 import time
 
-import ctypes
+from ctypes import c_uint32
+import sys
+from path import Path
+# caution: path[0] is reserved for script path (or '' in REPL)
+sys.path.append(str(Path(__file__).parent.parent))
+# print(sys.path)
+from params import Params 
 
 class RandomUintGenerator:
-    rngx:ctypes.c_uint32
-    rngy:ctypes.c_uint32
-    rngz:ctypes.c_uint32
-    rngc:ctypes.c_uint32
+    rngx:c_uint32
+    rngy:c_uint32
+    rngz:c_uint32
+    rngc:c_uint32
 
-    a:ctypes.c_uint32
-    b:ctypes.c_uint32
-    c:ctypes.c_uint32
-    d:ctypes.c_uint32
+    a:c_uint32
+    b:c_uint32
+    c:c_uint32
+    d:c_uint32
 
     def __init__(self):
         # for the Marsaglia algorithm
-        self.rngx = ctypes.c_uint32(0)
-        self.rngy = ctypes.c_uint32(0)
-        self.rngz = ctypes.c_uint32(0)
-        self.rngc = ctypes.c_uint32(0)
+        self.rngx = c_uint32(0)
+        self.rngy = c_uint32(0)
+        self.rngz = c_uint32(0)
+        self.rngc = c_uint32(0)
         # for the Jenkins algorithm
-        self.a = ctypes.c_uint32(0)
-        self.b = ctypes.c_uint32(0)
-        self.c = ctypes.c_uint32(0)
-        self.d = ctypes.c_uint32(0)
+        self.a = c_uint32(0)
+        self.b = c_uint32(0)
+        self.c = c_uint32(0)
+        self.d = c_uint32(0)
 
     def initialize(self, params):
         '''
@@ -53,21 +59,22 @@ class RandomUintGenerator:
             # event that a coefficient is zero, we'll force it to an arbitrary
             # non-zero value. Each thread uses a different seed, yet
             # deterministic per-thread.
-            thread_num = ctypes.c_uint32(threading.get_ident())
-            self.rngx = ctypes.c_uint32(params.RNGSeed + 123456789 + thread_num.value)
-            self.rngy = ctypes.c_uint32(params.RNGSeed + 362436000 + thread_num.value)
-            self.rngz = ctypes.c_uint32(params.RNGSeed + 521288629 + thread_num.value)
-            self.rngc = ctypes.c_uint32(params.RNGSeed + 7654321 + thread_num.value)
-            self.rngx = self.rngx if self.rngx != ctypes.c_uint32(0) else ctypes.c_uint32(123456789)
-            self.rngy = self.rngy if self.rngy != ctypes.c_uint32(0) else ctypes.c_uint32(123456789)
-            self.rngz = self.rngz if self.rngz != ctypes.c_uint32(0) else ctypes.c_uint32(123456789)
-            self.rngc = self.rngc if self.rngc != ctypes.c_uint32(0) else ctypes.c_uint32(123456789)
+            thread_num = c_uint32(threading.get_ident())
+            self.rngx = c_uint32(params.RNGSeed + 123456789 + thread_num.value)
+            self.rngy = c_uint32(params.RNGSeed + 362436000 + thread_num.value)
+            self.rngz = c_uint32(params.RNGSeed + 521288629 + thread_num.value)
+            self.rngc = c_uint32(params.RNGSeed + 7654321 + thread_num.value)
+            self.rngx = self.rngx if self.rngx != c_uint32(0) else c_uint32(123456789)
+            self.rngy = self.rngy if self.rngy != c_uint32(0) else c_uint32(123456789)
+            self.rngz = self.rngz if self.rngz != c_uint32(0) else c_uint32(123456789)
+            self.rngc = self.rngc if self.rngc != c_uint32(0) else c_uint32(123456789)
 
             # Initialize Jenkins deterministically per-thread:
-            self.a = ctypes.c_uint32(0xf1ea5eed)
-            self.b = self.c = self.d = ctypes.c_uint32(params.RNGSeed + thread_num.value)
+            self.a = c_uint32(0xf1ea5eed)
+            self.b = self.c = self.d = c_uint32(params.RNGSeed + thread_num.value)
             if self.b.value == 0:
-                self.b = self.c = self.d.value + ctypes.c_uint32(123456789)
+                self.b = self.c = self.d.value + c_uint32(123456789)
+            print(thread_num.value) # check if unique only in development
         else:
             # Non-deterministic initialization.
             # First we will get a random number from the built-in random
@@ -80,17 +87,16 @@ class RandomUintGenerator:
             random.seed(int(time.time()) + threading.get_ident())
 
             # Initialize Marsaglia, but don't let any of the values be zero:
-            self.rngx = ctypes.c_uint32(random.getrandbits(32)) or ctypes.c_uint32(123456789)
-            self.rngy = ctypes.c_uint32(random.getrandbits(32)) or ctypes.c_uint32(123456789)
-            self.rngz = ctypes.c_uint32(random.getrandbits(32)) or ctypes.c_uint32(123456789)
-            self.rngc = ctypes.c_uint32(random.getrandbits(32)) or ctypes.c_uint32(123456789)
+            self.rngx = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
+            self.rngy = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
+            self.rngz = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
+            self.rngc = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
 
             # Initialize Jenkins, but don't let any of the values be zero:
-            self.a = ctypes.c_uint32(0xf1ea5eed)
-            self.b = self.c = self.d = ctypes.c_uint32(random.getrandbits(32)) or ctypes.c_uint32(123456789)
-        print(thread_num.value) # check if unique
+            self.a = c_uint32(0xf1ea5eed)
+            self.b = self.c = self.d = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
 
-    def __call__(self,algo: bool = 0, min: Optional[ctypes.c_uint32] = None, max: Optional[ctypes.c_uint32] = None) -> ctypes.c_uint32:
+    def __call__(self,algo: bool = 0, min: Optional[c_uint32] = None, max: Optional[c_uint32] = None) -> c_uint32:
         # algo: 
         # 0: Jenkins algorithm
         # 1: Marsaglia algorithm
@@ -99,36 +105,29 @@ class RandomUintGenerator:
             if algo:  # Replace with a condition to choose between the two algorithms
                 # Marsaglia algorithm
                 a = 698769069
-                self.rngx = ctypes.c_uint32(69069 * self.rngx.value + 12345)
-                self.rngy.value ^= ctypes.c_uint32(self.rngy.value << 13).value
-                self.rngy.value ^= ctypes.c_uint32(self.rngy.value >> 17).value
-                self.rngy.value ^= ctypes.c_uint32(self.rngy.value << 5).value  # you must never be set to zero!
-                t = ctypes.c_uint32(a * self.rngz.value + self.rngc.value)
-                self.rngc = ctypes.c_uint32(t.value >> 32)  # Also avoid setting z=c=0!
-                return ctypes.c_uint32(self.rngx.value + self.rngy.value + (self.rngz.value == t.value))
+                self.rngx = c_uint32(69069 * self.rngx.value + 12345)
+                self.rngy.value ^= c_uint32(self.rngy.value << 13).value
+                self.rngy.value ^= c_uint32(self.rngy.value >> 17).value
+                self.rngy.value ^= c_uint32(self.rngy.value << 5).value  # you must never be set to zero!
+                t = c_uint32(a * self.rngz.value + self.rngc.value)
+                self.rngc = c_uint32(t.value >> 32)  # Also avoid setting z=c=0!
+                return c_uint32(self.rngx.value + self.rngy.value + (self.rngz.value == t.value))
             else:
                 # Jenkins algorithm (Faster)
                 rot32 = lambda x, k: (((x) << (k)) | ((x) >> (32 - (k))))
-                e = ctypes.c_uint32(self.a.value - rot32(self.b.value, 27))
-                self.a = ctypes.c_uint32(self.b.value ^ rot32(self.c.value, 17))
-                self.b = ctypes.c_uint32(self.c.value + self.d.value)
-                self.c = ctypes.c_uint32(self.d.value + e.value)
-                self.d = ctypes.c_uint32(e.value + self.a.value)
-                return ctypes.c_uint32(self.d.value)
+                e = c_uint32(self.a.value - rot32(self.b.value, 27))
+                self.a = c_uint32(self.b.value ^ rot32(self.c.value, 17))
+                self.b = c_uint32(self.c.value + self.d.value)
+                self.c = c_uint32(self.d.value + e.value)
+                self.d = c_uint32(e.value + self.a.value)
+                return c_uint32(self.d.value)
         else:
             # This is equivalent to the C++ operator() method with min and max arguments
             assert max.value >= min.value
-            return ctypes.c_uint32((self.__call__(algo=algo).value % (max.value - min.value + 1)) + min.value)
-
-class Params:
-        def __init__(self) -> None:
-            self.deterministic=True
-            self.RNGSeed=0
-
+            return c_uint32((self.__call__(algo=algo).value % (max.value - min.value + 1)) + min.value)
 
 
 if __name__ == "__main__":
-    
     def thread_function(thread_id):
         randomUint.instance = RandomUintGenerator()
         randomUint.instance.initialize(params=Params())
@@ -138,7 +137,7 @@ if __name__ == "__main__":
     # Each thread will have a private instance of the RNG.
     randomUint = threading.local()
     randomUint.instance = RandomUintGenerator()
-
+    Params()
     randomUintInst = randomUint.instance.initialize(params=Params())
 
     threads = []
