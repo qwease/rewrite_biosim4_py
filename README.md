@@ -31,3 +31,7 @@ Completed RNG.py for (random.cpp/.h)
 
 Completed basicType.py for (basicType.cpp/.h)
 Start working on params.py (params.cpp/.h)
+
+23.11.01
+
+Finished first iteration of params.cpp/.h, we now have params.py
