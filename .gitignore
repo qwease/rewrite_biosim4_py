@@ -3,6 +3,9 @@ src/*.cpp
 src/*.h
 src/CMakeLists.txt
 note.txt
+working_on
+done
+src copy
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
