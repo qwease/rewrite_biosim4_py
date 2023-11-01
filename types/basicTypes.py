@@ -6,9 +6,10 @@ from path import Path
 sys.path.append(str(Path(__file__).parent.parent))
 # print(sys.path)
 
+from params import Params
 from enum import Enum, IntEnum
 from typing import Union
-from utils.RNG import RandomUintGenerator,Params
+from utils.RNG import RandomUintGenerator
 from math import sqrt
 from ctypes import c_uint8, c_int16, c_int64, c_uint32
 
@@ -83,7 +84,7 @@ class Dir:
     @staticmethod
     def random8() -> 'Dir':
         #--------may be call in other threads
-        randomUintLocalThread.instance = RandomUintGenerator()
+        randomUintLocalThread.instance = RandomUintGenerator() # should be replaced by other initialiser
         randomUintLocalThread.instance.initialize(params=Params())
         #--------
         return Dir(Compass.N).rotate(randomUintLocalThread.instance(min=c_uint32(0), max=c_uint32(7)).value)
@@ -426,4 +427,6 @@ if __name__ == "__main__":
         p2.dir
         p2.mag
 
+    test_dir()
+    test_coord()
     test_polar()
