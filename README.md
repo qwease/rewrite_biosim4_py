@@ -36,3 +36,5 @@ Start working on params.py (params.cpp/.h)
 
 Finished first iteration of params.cpp/.h, we now have params.py
 Start working on sensors-actions.h
+
+Finished first iteration of sensors-actions.h, we now have sensors-actions.py
