@@ -2,7 +2,8 @@ from sys import path
 import threading
 from path import Path
 # caution: path[0] is reserved for script path (or '' in REPL)
-path.append(str(Path(__file__).parent))
+if str(Path(__file__).parent) not in path:
+    path.append(str(Path(__file__).parent)) 
 # print(path)
 from basicTypes import *
 from genome_neurons import *

@@ -18,10 +18,11 @@ import random
 import time
 
 from ctypes import c_uint32
-import sys
+from sys import path
 from path import Path
 # caution: path[0] is reserved for script path (or '' in REPL)
-sys.path.append(str(Path(__file__).parent.parent))
+if str(Path(__file__).parent.parent) not in path:
+    path.append(str(Path(__file__).parent.parent))
 # print(sys.path)
 from params import Params 
 
@@ -47,56 +48,60 @@ class RandomUintGenerator:
         self.b = c_uint32(0)
         self.c = c_uint32(0)
         self.d = c_uint32(0)
+        self.isInitialised=False # try to initialise once for one thread
 
     def initialize(self, params):
         '''
         must be called to seed the RNG
         '''
+        
+        thread_num_temp = c_uint32(threading.get_ident()) # check if unique only in development
         # if p.deterministic:
-        if params.deterministic:
-            # Initialize Marsaglia. Overflow wrap-around is ok. We just want
-            # the four parameters to be unrelated. In the extremely unlikely
-            # event that a coefficient is zero, we'll force it to an arbitrary
-            # non-zero value. Each thread uses a different seed, yet
-            # deterministic per-thread.
-            thread_num = c_uint32(threading.get_ident())
-            self.rngx = c_uint32(params.RNGSeed + 123456789 + thread_num.value)
-            self.rngy = c_uint32(params.RNGSeed + 362436000 + thread_num.value)
-            self.rngz = c_uint32(params.RNGSeed + 521288629 + thread_num.value)
-            self.rngc = c_uint32(params.RNGSeed + 7654321 + thread_num.value)
-            self.rngx = self.rngx if self.rngx != c_uint32(0) else c_uint32(123456789)
-            self.rngy = self.rngy if self.rngy != c_uint32(0) else c_uint32(123456789)
-            self.rngz = self.rngz if self.rngz != c_uint32(0) else c_uint32(123456789)
-            self.rngc = self.rngc if self.rngc != c_uint32(0) else c_uint32(123456789)
+        if not self.isInitialised:
+            if params.deterministic:
+                # Initialize Marsaglia. Overflow wrap-around is ok. We just want
+                # the four parameters to be unrelated. In the extremely unlikely
+                # event that a coefficient is zero, we'll force it to an arbitrary
+                # non-zero value. Each thread uses a different seed, yet
+                # deterministic per-thread.
+                thread_num = c_uint32(threading.get_ident())
+                self.rngx = c_uint32(params.RNGSeed + 123456789 + thread_num.value)
+                self.rngy = c_uint32(params.RNGSeed + 362436000 + thread_num.value)
+                self.rngz = c_uint32(params.RNGSeed + 521288629 + thread_num.value)
+                self.rngc = c_uint32(params.RNGSeed + 7654321 + thread_num.value)
+                self.rngx = self.rngx if self.rngx != c_uint32(0) else c_uint32(123456789)
+                self.rngy = self.rngy if self.rngy != c_uint32(0) else c_uint32(123456789)
+                self.rngz = self.rngz if self.rngz != c_uint32(0) else c_uint32(123456789)
+                self.rngc = self.rngc if self.rngc != c_uint32(0) else c_uint32(123456789)
+                # Initialize Jenkins deterministically per-thread:
+                self.a = c_uint32(0xf1ea5eed)
+                self.b = self.c = self.d = c_uint32(params.RNGSeed + thread_num.value)
+                if self.b.value == 0:
+                    self.b = self.c = self.d.value + c_uint32(123456789)
+            else:
+                # Non-deterministic initialization.
+                # First we will get a random number from the built-in random
+                # generator and use that to derive the starting coefficients 
+                # for the Marsaglia and Jenkins RNGs.
+                # We'll seed random with time(), but that has a coarse
+                # resolution and multiple threads might be initializing their
+                # instances at nearly the same time, so we'll add the thread
+                # number to uniquely seed random per-thread.
+                random.seed(int(time.time()) + threading.get_ident())
 
-            # Initialize Jenkins deterministically per-thread:
-            self.a = c_uint32(0xf1ea5eed)
-            self.b = self.c = self.d = c_uint32(params.RNGSeed + thread_num.value)
-            if self.b.value == 0:
-                self.b = self.c = self.d.value + c_uint32(123456789)
-            print(thread_num.value) # check if unique only in development
-        else:
-            # Non-deterministic initialization.
-            # First we will get a random number from the built-in random
-            # generator and use that to derive the starting coefficients 
-            # for the Marsaglia and Jenkins RNGs.
-            # We'll seed random with time(), but that has a coarse
-            # resolution and multiple threads might be initializing their
-            # instances at nearly the same time, so we'll add the thread
-            # number to uniquely seed random per-thread.
-            random.seed(int(time.time()) + threading.get_ident())
+                # Initialize Marsaglia, but don't let any of the values be zero:
+                self.rngx = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
+                self.rngy = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
+                self.rngz = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
+                self.rngc = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
 
-            # Initialize Marsaglia, but don't let any of the values be zero:
-            self.rngx = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
-            self.rngy = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
-            self.rngz = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
-            self.rngc = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
+                # Initialize Jenkins, but don't let any of the values be zero:
+                self.a = c_uint32(0xf1ea5eed)
+                self.b = self.c = self.d = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
+        print(thread_num_temp.value) # check if unique only in development
+        self.isInitialised = True
 
-            # Initialize Jenkins, but don't let any of the values be zero:
-            self.a = c_uint32(0xf1ea5eed)
-            self.b = self.c = self.d = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
-
-    def __call__(self,algo: bool = 0, min: Optional[c_uint32] = None, max: Optional[c_uint32] = None) -> c_uint32:
+    def __call__(self, min: Optional[c_uint32] = None, max: Optional[c_uint32] = None, algo: bool = 0) -> c_uint32:
         # algo: 
         # 0: Jenkins algorithm
         # 1: Marsaglia algorithm
@@ -123,22 +128,27 @@ class RandomUintGenerator:
                 return c_uint32(self.d.value)
         else:
             # This is equivalent to the C++ operator() method with min and max arguments
-            assert max.value >= min.value
-            return c_uint32((self.__call__(algo=algo).value % (max.value - min.value + 1)) + min.value)
+            if isinstance(max, int) and isinstance(min,int):
+                max_,min_=c_uint32(max),c_uint32(min)
+            else:
+                max_,min_=max, min
+            assert max_.value >= min_.value
+            return c_uint32((self.__call__(algo=algo).value % (max_.value - min_.value + 1)) + min_.value)
+
+randomUint = threading.local()
 
 
 if __name__ == "__main__":
     def thread_function(thread_id):
         randomUint.instance = RandomUintGenerator()
-        randomUint.instance.initialize(params=Params())
+        randomUint.instance.initialize(params=params)
         print(f'Thread-{thread_id} value: ', randomUint.instance(algo=0))
     
     # The globally-scoped random number generator.
     # Each thread will have a private instance of the RNG.
-    randomUint = threading.local()
-    randomUint.instance = RandomUintGenerator()
-    Params()
-    randomUintInst = randomUint.instance.initialize(params=Params())
+    from simulator import params
+    # randomUint.instance = RandomUintGenerator()
+    # randomUintInst = randomUint.instance.initialize(params=params)
 
     threads = []
 

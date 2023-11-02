@@ -4,11 +4,11 @@ from sys import path
 import threading
 from path import Path
 # caution: path[0] is reserved for script path (or '' in REPL)
-path.append(str(Path(__file__).parent))
+if str(Path(__file__).parent) not in path:
+    path.append(str(Path(__file__).parent)) 
 # print(sys.path)
-from utils.RNG import RandomUintGenerator
-# from sensors_actions import *
-
+from utils.RNG import RandomUintGenerator, randomUint
+from simulator import params
 # Each gene specifies one synaptic connection in a neural net. Each
 # connection has an input (source) which is either a sensor or another neuron.
 # Each connection has an output, which is either an action or another neuron.
@@ -37,9 +37,10 @@ class Gene:
 
     @staticmethod
     def makeRandomWeight() -> float:
-        randomUint = threading.local()
+        # been wrapped by outer thread
         randomUint.instance = RandomUintGenerator()
-        return randomUint(0, 0xffff) - 0x8000
+        randomUint.instance.initialize(params=params)
+        return randomUint.instance(0, 0xffff).value - 0x8000
 
 # An individual's genome is a set of Genes (see Gene comments above). Each
 # gene is equivalent to one connection in a neural net. An individual's
@@ -108,3 +109,31 @@ if __name__ == "__main__":
     def geneticDiversity() -> float:  # 0.0..1.0
         return 0.3
     print(geneticDiversity())
+
+    # multithread testing
+    gene=Gene(1,7,1,7,0.1)
+    def thread_function(thread_id):
+        print(f'Thread-{thread_id} value: ', gene.makeRandomWeight())
+    
+    # The globally-scoped random number generator.
+    # Each thread will have a private instance of the RNG.
+    from simulator import params
+    # randomUint.instance = RandomUintGenerator()
+    # randomUintInst = randomUint.instance.initialize(params=params)
+
+    threads = []
+
+    import time
+    start = time.time()
+    # Create and start 10 threads
+    for i in range(10):
+        t = threading.Thread(target=thread_function, args=(i,))
+        threads.append(t)
+        t.start()
+
+    # Wait for all threads to finish
+    for t in threads:
+        t.join()
+    
+    end= time.time()
+    print(end-start)

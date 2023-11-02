@@ -38,3 +38,9 @@ Finished first iteration of params.cpp/.h, we now have params.py
 Start working on sensors-actions.h
 
 Finished first iteration of sensors-actions.h, we now have sensors-actions.py
+created grid.py, indiv.py, simulator.py
+Start working on grid.cpp/.h
+
+23.11.02
+minor fixes
+fix issue of not generating by max min in RNG.py, fix of same path added to sys.path in import loop 

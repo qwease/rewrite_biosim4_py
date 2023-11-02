@@ -1,12 +1,15 @@
 # encoding: utf-8
-import sys
-import threading
+from sys import path
 from path import Path
+if str(Path(__file__).parent.parent) not in path:
+    path.append(str(Path(__file__).parent.parent))
+import threading
+
 # caution: path[0] is reserved for script path (or '' in REPL)
-sys.path.append(str(Path(__file__).parent.parent))
+
 # print(sys.path)
 
-from params import Params
+from simulator import *
 from enum import Enum, IntEnum
 from typing import Union
 from utils.RNG import RandomUintGenerator
@@ -85,7 +88,7 @@ class Dir:
     def random8() -> 'Dir':
         #--------may be call in other threads
         randomUintLocalThread.instance = RandomUintGenerator() # should be replaced by other initialiser
-        randomUintLocalThread.instance.initialize(params=Params())
+        randomUintLocalThread.instance.initialize(params=params)
         #--------
         return Dir(Compass.N).rotate(randomUintLocalThread.instance(min=c_uint32(0), max=c_uint32(7)).value)
 
