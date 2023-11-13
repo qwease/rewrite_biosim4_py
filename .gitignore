@@ -6,6 +6,7 @@ note.txt
 working_on
 done
 src copy
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
