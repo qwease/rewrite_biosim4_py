@@ -308,7 +308,7 @@ if __name__ == "__main__":
         grid=Grid()
         grid.init(params.sizeX,params.sizeY)
         loc = grid.findEmptyLocation()
-        grid.createBarrier(6)
+        grid.createBarrier(thread_id)
         print(grid.data)
         print(f'Thread-{thread_id} value: ', loc.x,loc.y)
     
