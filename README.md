@@ -44,3 +44,9 @@ Start working on grid.cpp/.h
 23.11.02
 minor fixes
 fix issue of not generating by max min in RNG.py, fix of same path added to sys.path in import loop 
+
+23.11.13
+a little progress in grid.py
+try to achieve one thread one random number generator
+params variable is now accessed through from params import params
+working on resolving circular import in grid.py and simulator.py
