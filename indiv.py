@@ -1,14 +1,15 @@
 from sys import path
 import threading
 from path import Path
+
+from grid import Grid
 # caution: path[0] is reserved for script path (or '' in REPL)
 if str(Path(__file__).parent) not in path:
     path.append(str(Path(__file__).parent)) 
 # print(path)
-from basicTypes import *
+from basicTypes import Coord, Dir
 from genome_neurons import *
 from sensors_actions import *
-from simulator import *
 
 class Indiv:
     def __init__(self, index, loc, genome):
@@ -24,7 +25,7 @@ class Indiv:
         self.longProbeDist = 0  # distance for long forward probe for obstructions
         self.lastMoveDir: Dir = None  # direction of last movement
         self.challengeBits = 0  # modified when the indiv accomplishes some task
-        self.actions = [0.0] * Action.NUM_ACTIONS
+        self.actions = [0.0] * Action.NUM_ACTIONS.value
 
     def feedForward(self, simStep):  # reads sensors, returns actions
         '''
@@ -35,11 +36,11 @@ class Indiv:
     def getSensor(self, Sensor, simStep):
         pass
 
-    def initialize(self, index_, loc_: Coord, genome_: Genome):
+    def initialize(self, index_, loc_: Coord, grid: Grid, genome_: Genome):
         self.index = index_
         self.loc = loc_
         # self.birthLoc = loc_
-        grid.set(loc_, index_)  # This needs a global 'grid' object or passed as a parameter
+        grid.set(loc_, val=index_)  # This needs a global 'grid' object or passed as a parameter
         self.age = 0
         self.oscPeriod = 34  # ToDo !!! define a constant
         self.alive = True
@@ -61,3 +62,10 @@ class Indiv:
 
     def printGenome(self):
         pass
+
+if __name__ == "__main__":
+    grid=Grid()
+    grid.init(100,100)
+    i = Indiv(index=1,loc=Coord(1,1),genome=Genome)
+    i.initialize(index_=1,loc_=Coord(1,1),grid=grid,genome_=Genome)
+    print(i.lastMoveDir.asInt.value)
