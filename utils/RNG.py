@@ -24,7 +24,8 @@ from path import Path
 if str(Path(__file__).parent.parent) not in path:
     path.append(str(Path(__file__).parent.parent))
 # print(sys.path)
-from params import Params 
+# from params import Params
+
 
 class RandomUintGenerator:
     rngx:c_uint32
@@ -48,7 +49,9 @@ class RandomUintGenerator:
         self.b = c_uint32(0)
         self.c = c_uint32(0)
         self.d = c_uint32(0)
-        self.isInitialised=False # try to initialise once for one thread
+        self.isInitialised=-1 # try to initialise once for one thread:
+        # -1 not initialised
+        # >0 initialised
 
     def initialize(self, params):
         '''
@@ -56,8 +59,9 @@ class RandomUintGenerator:
         '''
         
         thread_num_temp = c_uint32(threading.get_ident()) # check if unique only in development
+        
         # if p.deterministic:
-        if not self.isInitialised:
+        if self.isInitialised == -1: 
             if params.deterministic:
                 # Initialize Marsaglia. Overflow wrap-around is ok. We just want
                 # the four parameters to be unrelated. In the extremely unlikely
@@ -98,8 +102,9 @@ class RandomUintGenerator:
                 # Initialize Jenkins, but don't let any of the values be zero:
                 self.a = c_uint32(0xf1ea5eed)
                 self.b = self.c = self.d = c_uint32(random.getrandbits(32)) or c_uint32(123456789)
-        print(thread_num_temp.value) # check if unique only in development
-        self.isInitialised = True
+            self.isInitialised = thread_num_temp.value
+            print(thread_num_temp.value) # check if unique only in development
+
 
     def __call__(self, min: Optional[c_uint32] = None, max: Optional[c_uint32] = None, algo: bool = 0) -> c_uint32:
         # algo: 
@@ -137,6 +142,14 @@ class RandomUintGenerator:
 
 randomUint = threading.local()
 
+def getRandomGenerator(p):
+    # Check if this thread already has a random generator
+    if not hasattr(randomUint, 'RandomUintGenerator'):
+        # If not, create one
+        randomUint.RandomUintGenerator = RandomUintGenerator()
+        randomUint.RandomUintGenerator.initialize(params=p)
+    # Return the random generator
+    return randomUint.RandomUintGenerator
 
 if __name__ == "__main__":
     def thread_function(thread_id):
@@ -144,19 +157,28 @@ if __name__ == "__main__":
         randomUint.instance.initialize(params=params)
         print(f'Thread-{thread_id} value: ', randomUint.instance(algo=0))
     
+    def thread_function2(thread_id,params):
+        randomUint = getRandomGenerator(p=params)
+        print(f'Thread-{thread_id} value: ', randomUint(algo=0))
     # The globally-scoped random number generator.
     # Each thread will have a private instance of the RNG.
-    from simulator import params
+    # from simulator import params
+    from params import params
+    print(params.RNGSeed)
+
     # randomUint.instance = RandomUintGenerator()
     # randomUintInst = randomUint.instance.initialize(params=params)
 
     threads = []
 
+    randomUint = getRandomGenerator(p=params)
+    print(f'Thread-{0} value: ', randomUint(algo=0))
+
     import time
     start = time.time()
     # Create and start 10 threads
     for i in range(10):
-        t = threading.Thread(target=thread_function, args=(i,))
+        t = threading.Thread(target=thread_function2, args=(i,params))
         threads.append(t)
         t.start()
 
