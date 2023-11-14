@@ -78,13 +78,15 @@ class Params:
     parameterChangeGenerationNumber: int = 0  # the most recent generation number that an automatic parameter change occurred at
 
 class ParamManager:
+    _privParams = Params()
     def __init__(self):
-        self._privParams = Params()
+        self.privParams=ParamManager._privParams
         self._configFilename = ''
         self._lastModTime: time = 0
 
+    @property
     def getParamRef(self):
-        return self._privParams
+        return ParamManager._privParams
 
     def setDefaults(self):
         self._privParams.sizeX = 128
@@ -139,7 +141,7 @@ class ParamManager:
         "generationNumber" is unsigned
         '''
         try:
-            with open(self.configFilename, 'r') as cFile:
+            with open(self._configFilename, 'r') as cFile:
                 for line in cFile:
                     line = re.sub(r'\s', '', line)
                     if line.startswith('#') or not line:
@@ -168,7 +170,7 @@ class ParamManager:
                     self._ingestParameter(name, value)
 
         except IOError:
-            print(f"Couldn't open config file {self.configFilename}.")
+            print(f"Couldn't open config file {self._configFilename}.")
 
     def checkParameters(self):
         if self._privParams.deterministic and self._privParams.numThreads != 1:
@@ -185,13 +187,13 @@ class ParamManager:
 
         isBool = checkIfBool(val)
         bVal = getBoolVal(val)
-
+        
         while True:
             if name == "sizex" and isUint and 2 <= uVal <= 0xFFFF:
-                self._privParams.size_x = uVal
+                self._privParams.sizeX = uVal
                 break
             elif name == "sizey" and uVal and 2 <= uVal <= 0xFFFF:
-                self._privParams.size_y = uVal
+                self._privParams.sizeY = uVal
                 break
             elif name == "challenge" and isUint and uVal < 0xFFFF:
                 self._privParams.challenge = uVal
@@ -231,6 +233,7 @@ class ParamManager:
                 break
             elif name == "maxnumberneurons" and isUint and 0 < uVal < 0xFFFF:
                 self._privParams.maxNumberNeurons = uVal
+                break
             elif name == "pointmutationrate" and isFloat and 0.0 <= dVal <= 1.0:
                 self._privParams.pointMutationRate = dVal
                 break            
@@ -317,15 +320,23 @@ class ParamManager:
                 break
    
 
-def params_init(argc, argv):
-    '''
-    Returns a copy of params with default values overridden by the values
-    in the specified config file. The filename of the config file is saved
-    inside the params for future reference.
-    '''
-    param_manager = ParamManager()
-    # Fill this in with code to set up the initial params
-    return param_manager.getParamRef()
+def initParams(filename="biosim4.ini"):
+    paramManager.setDefaults()
+    paramManager.registerConfigFile(filename=filename)
+    paramManager.updateFromConfigFile(generationNumber=0)
+    paramManager.checkParameters()
+    params = paramManager.getParamRef
+    return params
+
+# def paramsInit(argc, argv):
+#     '''
+#     Returns a copy of params with default values overridden by the values
+#     in the specified config file. The filename of the config file is saved
+#     inside the params for future reference.
+#     '''
+#     param_manager = ParamManager()
+#     # Fill this in with code to set up the initial params
+#     return param_manager.getParamRef()
 
 def checkIfUint(s: str):
     '''
@@ -353,3 +364,9 @@ def checkIfBool(s: str):
 
 def getBoolVal(s):
     return s in ["true", "1"]
+
+paramManager = ParamManager()
+params = initParams()
+
+if __name__ == "__main__":
+    initParams()
