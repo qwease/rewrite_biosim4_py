@@ -7,8 +7,10 @@ from path import Path
 if str(Path(__file__).parent) not in path:
     path.append(str(Path(__file__).parent)) 
 # print(sys.path)
-from utils.RNG import RandomUintGenerator, randomUint
-from simulator import params
+from utils.RNG import getRandomGenerator#RandomUintGenerator,randomUint
+# from simulator import params
+from params import params
+
 # Each gene specifies one synaptic connection in a neural net. Each
 # connection has an input (source) which is either a sensor or another neuron.
 # Each connection has an output, which is either an action or another neuron.
@@ -38,9 +40,12 @@ class Gene:
     @staticmethod
     def makeRandomWeight() -> float:
         # been wrapped by outer thread
-        randomUint.instance = RandomUintGenerator()
-        randomUint.instance.initialize(params=params)
-        return randomUint.instance(0, 0xffff).value - 0x8000
+        
+        # randomUint.instance = RandomUintGenerator()
+        # randomUint.instance.initialize(params=params)
+        # return randomUint.instance(0, 0xffff).value - 0x8000
+        randomUint = getRandomGenerator(p=params)
+        return randomUint(0, 0xffff).value - 0x8000
 
 # An individual's genome is a set of Genes (see Gene comments above). Each
 # gene is equivalent to one connection in a neural net. An individual's
@@ -117,23 +122,28 @@ if __name__ == "__main__":
     
     # The globally-scoped random number generator.
     # Each thread will have a private instance of the RNG.
-    from simulator import params
+    # from simulator import params
+    from params import params
     # randomUint.instance = RandomUintGenerator()
     # randomUintInst = randomUint.instance.initialize(params=params)
 
     threads = []
 
     import time
-    start = time.time()
-    # Create and start 10 threads
-    for i in range(10):
-        t = threading.Thread(target=thread_function, args=(i,))
-        threads.append(t)
-        t.start()
+    tests=[]
+    for i in range(1):
+        start = time.time()
+        # Create and start 10 threads
+        for i in range(10):
+            t = threading.Thread(target=thread_function, args=(i,))
+            threads.append(t)
+            t.start()
 
-    # Wait for all threads to finish
-    for t in threads:
-        t.join()
-    
-    end= time.time()
-    print(end-start)
+        # Wait for all threads to finish
+        for t in threads:
+            t.join()
+        
+        end= time.time()
+
+        tests.append(end-start)
+    print(sum(tests)/len(tests))
