@@ -50,3 +50,23 @@ a little progress in grid.py
 try to achieve one thread one random number generator
 params variable is now accessed through from params import params
 working on resolving circular import in grid.py and simulator.py
+
+23.11.14
+completed first iteration of grid.py
+changes to RNG.py to make it one thread one generator
+resolved circular import in grid.py and simulator.py by using passage of grid parameter
+Discovery:
+
+    from multiprocessing import Process,Pool
+    ps=[]
+    grid=Grid()
+    grid.init(params.sizeX,params.sizeY)
+    pool = Pool(18)
+
+    # map list to target function
+    start = time.time()
+    result = pool.map(grid.createBarrier, [5 for i in range(10000)])
+    end= time.time()
+    print(end-start)
+
+multiprocessing is way faster than using threading module

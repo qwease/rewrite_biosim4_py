@@ -64,8 +64,6 @@ Arithmetic
     Polar = Polar * Polar (dot product)
 '''
 
-randomUintLocalThread = threading.local()
-
 class Compass(IntEnum):
     SW = 0
     S = 1
