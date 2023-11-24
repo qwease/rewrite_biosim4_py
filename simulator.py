@@ -6,12 +6,25 @@ from path import Path
 if str(Path(__file__).parent) not in path:
     path.append(str(Path(__file__).parent)) 
 # print(path)
-from params import params,paramManager
+from params import params
 from grid import Grid
 from utils.RNG import getRandomGenerator
+from sensors_actions import printSensorsActions
+
+printSensorsActions()
+
+# -----
+# init param variable like C++,
+# already initialised in params.py by initParams()
+# -----
+
+randomUint=getRandomGenerator(p=params)
 
 grid = Grid()
-randomUint=getRandomGenerator(p=params)
+grid.init(sizeX=params.sizeX,sizeY=params.sizeY)
+
+
+
 
 # params = params
 
