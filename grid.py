@@ -244,9 +244,9 @@ class Grid:
                     self.set(loc, val=BARRIER)
                 self._barrierLocations.append(loc)
             
-            self.visitNeighborhood(loc=center0, radius=radius, f=f)
-            self.visitNeighborhood(loc=center1, radius=radius, f=f)
-            self.visitNeighborhood(loc=center2, radius=radius, f=f)
+            visitNeighborhood(loc=center0, radius=radius, f=f)
+            visitNeighborhood(loc=center1, radius=radius, f=f)
+            visitNeighborhood(loc=center2, radius=radius, f=f)
 
         elif barrierType == 6:  # Spots, specified number, radius, locations
             numberOfLocations = 5
@@ -261,7 +261,7 @@ class Grid:
 
             for n in range(1, numberOfLocations + 1):
                 loc = Coord(params.sizeX // 2, n * verticalSliceSize)
-                self.visitNeighborhood(loc, radius, f)
+                visitNeighborhood(loc, radius, f)
                 self._barrierCenters.append(loc)
 
         else:
@@ -276,21 +276,21 @@ class Grid:
 
 
 def visitNeighborhood(loc: Coord, radius: float, f: Callable[[Coord], None]):
-        '''
-        This is a utility function used when inspecting a local neighborhood around
-        some location. This function feeds each valid (in-bounds) location in the specified
-        neighborhood to the specified function. Locations include self (center of the neighborhood).
-        '''
-        for dx in range(-min(int(radius), loc.x), min(int(radius), (params.sizeX - loc.x) - 1) + 1):
-            x = loc.x + dx
-            if not (x >= 0 and x < params.sizeX):
-                raise ValueError("Assertion failed: x >= 0 and x < params.sizeX")
-            extentY = int(sqrt(radius * radius - dx * dx))
-            for dy in range(-min(extentY, loc.y), min(extentY, (params.sizeY - loc.y) - 1) + 1):
-                y = loc.y + dy
-                if not (y >= 0 and y < params.sizeY):
-                    raise ValueError("Assertion failed: y >= 0 and y < params.sizeY")
-                f(Coord(x, y))
+    '''
+    This is a utility function used when inspecting a local neighborhood around
+    some location. This function feeds each valid (in-bounds) location in the specified
+    neighborhood to the specified function. Locations include self (center of the neighborhood).
+    '''
+    for dx in range(-min(int(radius), loc.x), min(int(radius), (params.sizeX - loc.x) - 1) + 1):
+        x = loc.x + dx
+        if not (x >= 0 and x < params.sizeX):
+            raise ValueError("Assertion failed: x >= 0 and x < params.sizeX")
+        extentY = int(sqrt(radius * radius - dx * dx))
+        for dy in range(-min(extentY, loc.y), min(extentY, (params.sizeY - loc.y) - 1) + 1):
+            y = loc.y + dy
+            if not (y >= 0 and y < params.sizeY):
+                raise ValueError("Assertion failed: y >= 0 and y < params.sizeY")
+            f(Coord(x, y))
 
 
 def unitTestGridVisitNeighborhood():
