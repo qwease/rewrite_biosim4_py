@@ -22,9 +22,13 @@ class Signals:
         centerIncreaseAmount = 2
         neighborIncreaseAmount = 1
         radius = 1.5
+        # # Increase the neighbors, include the center
+        # visitNeighborhood(loc, radius, lambda loc: self.increase(layerNum, loc, neighborIncreaseAmount))
 
+        # # Increase the center cell
+        # self.increase(layerNum, loc, centerIncreaseAmount)
         with self.lock:
-            # Increase the neighbors
+            # Increase the neighbors, include the center
             visitNeighborhood(loc, radius, lambda loc: self.increase(layerNum, loc, neighborIncreaseAmount))
 
             # Increase the center cell
@@ -46,3 +50,87 @@ class Signals:
                     self.data[layerNum, x, y] -= fadeAmount  # fade center cell
                 else:
                     self.data[layerNum, x, y] = 0
+
+if __name__ == '__main__':
+    # ----unit test below----
+    import unittest
+    import multiprocessing
+    from multiprocessing.managers import BaseManager
+    def increment(signals,loc):
+                for _ in range(100):
+                    signals.increment(0, loc)
+
+    def fade(signals, layerNum):
+            fadeAmount = 1
+
+            for x in range(signals.data.shape[1]):
+                for y in range(signals.data.shape[2]):
+                    if signals.data[layerNum, x, y] >= fadeAmount:
+                        signals.data[layerNum, x, y] -= fadeAmount  # fade center cell
+                    else:
+                        signals.data[layerNum, x, y] = 0 
+
+    class MyManager(BaseManager):
+        pass
+
+    MyManager.register('Signals', Signals)
+
+    class TestSignals(unittest.TestCase):
+        def setUp(self):
+            self.signals = Signals()
+            self.signals.init(2, 3, 3)
+
+        def test_init(self):
+            self.assertEqual(self.signals.data.shape, (2, 3, 3))
+
+        def test_getMagnitude(self):
+            loc = Coord(1, 1)
+            self.assertEqual(self.signals.getMagnitude(1, loc), 0)
+
+        def test_increment(self):
+            loc = Coord(1, 1)
+            self.signals.increment(1, loc)
+            self.assertEqual(self.signals.getMagnitude(1, loc), 3)
+            self.assertEqual(self.signals.getMagnitude(1, Coord(1, 2)), 1)
+
+        def test_increase(self):
+            loc = Coord(1, 1)
+            self.signals.increase(1, loc, 3)
+            self.assertEqual(self.signals.getMagnitude(1, loc), 3)
+
+        def test_zeroFill(self):
+            self.signals.zeroFill()
+            for x in range(self.signals.data.shape[1]):
+                for y in range(self.signals.data.shape[2]):
+                    self.assertEqual(self.signals.data[1, x, y], 0)
+
+        def test_fade(self):
+            loc = Coord(1, 1)
+            self.signals.increase(1, loc, 3)
+            self.signals.fade(1)
+            self.assertEqual(self.signals.getMagnitude(1, loc), 2)
+
+        def test_multiprocessing_lock(self):
+            with MyManager() as manager:
+                # Create Signals object on the manager
+                signals = manager.Signals()
+                signals.init(1, 256, 256)
+
+                loc = Coord(1, 1)
+                ps = []
+                # Start two processes that increment the same location
+                for _ in range(2):
+                    p = multiprocessing.Process(target=increment, args=(signals, loc))
+                    ps.append(p)
+
+                for p in ps:
+                    p.start()
+
+                for p in ps:
+                    p.join()
+
+                # Check the result
+                self.assertEqual(signals.getMagnitude(0, Coord(0,0)), 200)
+    unittest.main()
+    
+
