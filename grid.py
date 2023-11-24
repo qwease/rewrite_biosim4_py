@@ -275,7 +275,7 @@ class Grid:
         return self._barrierCenters
 
 
-    def visitNeighborhood(self, loc: Coord, radius: float, f: Callable[[Coord], None]):
+def visitNeighborhood(loc: Coord, radius: float, f: Callable[[Coord], None]):
         '''
         This is a utility function used when inspecting a local neighborhood around
         some location. This function feeds each valid (in-bounds) location in the specified
