@@ -10,6 +10,7 @@ from params import params
 from grid import Grid
 from utils.RNG import getRandomGenerator
 from sensors_actions import printSensorsActions
+from signals import Signals
 
 printSensorsActions()
 
@@ -21,7 +22,10 @@ printSensorsActions()
 randomUint=getRandomGenerator(p=params)
 
 grid = Grid()
+signals = Signals()
+# peeps = Peeps()
 grid.init(sizeX=params.sizeX,sizeY=params.sizeY)
+signals.init(numLayers=params.signalLayers, sizeX=params.sizeX, sizeY=params.sizeY)
 
 
 
