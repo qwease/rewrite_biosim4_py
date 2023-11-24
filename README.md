@@ -70,3 +70,8 @@ Discovery:
     print(end-start)
 
 multiprocessing is way faster than using threading module
+
+23.11.24
+added some initialisation steps in simulator.py
+adjusted visitNeighborhood()
+completed signals.py
